@@ -1,806 +1,177 @@
-<!DOCTYPE html>
-<html lang="zh">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hi, PW | Command Center</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        :root {
-            --bg: #0a0a0a;
-            --card: rgba(255,255,255,0.05);
-            --card-hover: rgba(255,255,255,0.1);
-            --lime: #D4E157;
-            --cyan: #00ffff;
-            --text: #ffffff;
-            --text2: rgba(255,255,255,0.5);
-            --radius: 16px;
-            --panel-width: 280px;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* 矩阵背景 */
-        #matrix-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            opacity: 0.15;
-        }
-
-        /* 扫描线 */
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0,0,0,0.1) 0px,
-                rgba(0,0,0,0.1) 1px,
-                transparent 1px,
-                transparent 2px
-            );
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        /* 主布局 */
-        .layout {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* 主内容区 */
-        .main {
-            flex: 1;
-            padding: 40px;
-            padding-top: 8vh;
-            margin-right: var(--panel-width);
-        }
-
-        /* 标题 */
-        .header {
-            margin-bottom: 50px;
-        }
-
-        .title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 80px;
-            font-weight: 900;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            color: #fff;
-            position: relative;
-            display: inline-block;
-            margin-bottom: 16px;
-            text-shadow: 
-                0 0 5px #fff,
-                0 0 10px #fff,
-                0 0 20px var(--lime),
-                0 0 40px var(--lime),
-                0 0 80px var(--lime);
-            animation: breathe 4s ease-in-out infinite alternate;
-        }
-
-        /* 呼吸动画 */
-        @keyframes breathe {
-            0% { opacity: 0.9; text-shadow: 0 0 20px var(--lime), 0 0 40px var(--lime); }
-            100% { opacity: 1; text-shadow: 0 0 20px var(--lime), 0 0 40px var(--lime), 0 0 80px var(--lime), 0 0 100px var(--lime); }
-        }
-
-        /* Glitch 故障特效 - 只影响文字部分 */
-        .title::before,
-        .title::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: auto;
-            height: 100%;
-            background: var(--bg);
-            z-index: -1;
-        }
-
-        .title::before {
-            left: 2px;
-            text-shadow: -2px 0 #00ffff;
-            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-            animation: glitch-1 2.5s infinite linear alternate-reverse;
-        }
-
-        .title::after {
-            left: -2px;
-            text-shadow: 2px 0 #ff00ff;
-            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-            animation: glitch-2 3s infinite linear alternate-reverse;
-        }
-
-        @keyframes glitch-1 {
-            0% { clip-path: inset(20% 0 80% 0); }
-            20% { clip-path: inset(60% 0 10% 0); }
-            40% { clip-path: inset(40% 0 50% 0); }
-            60% { clip-path: inset(80% 0 5% 0); }
-            80% { clip-path: inset(10% 0 60% 0); }
-            100% { clip-path: inset(30% 0 30% 0); }
-        }
-
-        @keyframes glitch-2 {
-            0% { clip-path: inset(10% 0 60% 0); }
-            20% { clip-path: inset(30% 0 20% 0); }
-            40% { clip-path: inset(10% 0 80% 0); }
-            60% { clip-path: inset(50% 0 10% 0); }
-            80% { clip-path: inset(70% 0 20% 0); }
-            100% { clip-path: inset(20% 0 40% 0); }
-        }
-
-        .title .wave-emoji {
-            display: inline-block;
-            animation: wave 1.5s ease-in-out infinite;
-            text-shadow: none;
-            position: relative;
-            z-index: 10;
-        }
-
-        @keyframes wave {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(20deg); }
-            75% { transform: rotate(-10deg); }
-        }
-
-        .subtitle {
-            color: var(--text2);
-            font-size: 16px;
-            min-height: 24px;
-        }
-
-        /* 打字机光标 */
-        .typing-cursor {
-            display: inline-block;
-            width: 2px;
-            height: 1em;
-            background: var(--lime);
-            margin-left: 2px;
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-
-        /* 访客计数器 */
-        .visitor-counter {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--card);
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: var(--text2);
-            margin-top: 16px;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s ease;
-        }
-
-        .visitor-counter:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: var(--lime);
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(212, 225, 87, 0.2);
-        }
-
-        .visitor-counter svg {
-            width: 14px;
-            height: 14px;
-            color: var(--lime);
-            transition: transform 0.3s ease;
-        }
-
-        .visitor-counter:hover svg {
-            transform: scale(1.2);
-        }
-
-        /* 搜索框 */
-        .search-box {
-            max-width: 400px;
-            margin: 30px 0;
-            position: relative;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 14px 20px 14px 48px;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            background: var(--card);
-            font-size: 14px;
-            color: var(--text);
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        .search-input::placeholder { color: var(--text2); }
-
-        .search-input:hover {
-            border-color: rgba(212, 225, 87, 0.3);
-            background: rgba(255,255,255,0.08);
-        }
-
-        .search-input:focus {
-            border-color: var(--lime);
-            box-shadow: 0 0 25px rgba(212, 225, 87, 0.3);
-            background: rgba(255,255,255,0.1);
-        }
-
-        /* 箭头脉冲动画 */
-        @keyframes arrowPulse {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(5px); }
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text2);
-            width: 20px;
-        }
-
-        .search-hint {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255,255,255,0.1);
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            color: var(--text2);
-        }
-
-        /* 赛博朋克纯文字按钮样式 */
-        .cyber-card {
-            text-decoration: none;
-            display: block;
-            position: relative;
-            transform: translateY(0);
-            transition: transform 0.3s ease;
-        }
-
-        .cyber-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .cyber-btn {
-            border: 2px solid var(--lime);
-            padding: 20px 24px;
-            background: transparent;
-            color: var(--lime);
-            font-family: 'Orbitron', 'Inter', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            clip-path: polygon(
-                12px 0, 100% 0, 
-                100% calc(100% - 12px), calc(100% - 12px) 100%, 
-                0 100%, 0 12px
-            );
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        /* 扫描线动画背景 */
-        .cyber-btn::after {
-            content: '';
-            position: absolute;
-            top: -100%;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                transparent 0%,
-                rgba(212, 225, 87, 0.1) 50%,
-                transparent 100%
-            );
-            transition: top 0.4s ease;
-        }
-
-        .cyber-card:hover .cyber-btn::after {
-            top: 100%;
-        }
-
-        .cyber-btn::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 12px;
-            height: 12px;
-            background: var(--lime);
-            transition: all 0.3s ease;
-            z-index: 2;
-        }
-
-        .cyber-card:hover .cyber-btn::before {
-            width: 100%;
-            height: 3px;
-        }
-
-        .cyber-btn .label {
-            color: var(--lime);
-            transition: all 0.25s ease;
-            position: relative;
-            z-index: 1;
-        }
-
-        .cyber-btn .arrow {
-            opacity: 0;
-            transform: translateX(-15px);
-            transition: all 0.3s ease;
-            font-weight: bold;
-            color: var(--lime);
-            font-family: monospace;
-            font-size: 1rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .cyber-card:hover .cyber-btn {
-            background: var(--lime);
-            color: #000;
-            box-shadow: 
-                0 0 30px rgba(212, 225, 87, 0.5),
-                0 10px 40px rgba(212, 225, 87, 0.3),
-                inset 0 0 20px rgba(255, 255, 255, 0.1);
-            padding-left: 32px;
-            border-color: #fff;
-        }
-
-        .cyber-card:hover .cyber-btn .label {
-            color: #000;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .cyber-card:hover .cyber-btn .arrow {
-            opacity: 1;
-            transform: translateX(0);
-            animation: arrowPulse 0.8s ease infinite;
-            color: #000;
-        }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7f2">
+  <meta name="description" content="嗨，我是 PW。这里是我的数字小院，收纳文字、文件和常用的 AI 与开发工具。保持好奇，随时出发。">
+  <meta property="og:title" content="Hi, PW · 我的数字小院">
+  <meta property="og:description" content="文字、灵感与好用的工具，都在触手可及的地方。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.hipw.cc/">
+  <meta property="og:locale" content="zh_CN">
+  <meta name="color-scheme" content="light dark">
+  <title>Hi, PW · 我的数字小院</title>
+  <link rel="canonical" href="https://www.hipw.cc/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script>
+    try {
+      const savedTheme = localStorage.getItem('pw.theme');
+      document.documentElement.dataset.theme = savedTheme === 'light' || savedTheme === 'dark'
+        ? savedTheme : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    } catch { document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
 </head>
 <body>
-<canvas id="matrix-bg"></canvas>
-<div class="scanlines"></div>
+  <a class="skip-link" href="#services">跳到服务导航</a>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.7 6.3.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.3-.9Z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.4 14A8.5 8.5 0 0 1 10 3.6 8.5 8.5 0 1 0 20.4 14Z"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M9 21v-3.5c-4 .8-4-2-5-2m11 5.5v-3.8c0-1-.3-1.7-.8-2.2 2.8-.3 5.8-1.4 5.8-6.1 0-1.4-.5-2.5-1.3-3.3a4.4 4.4 0 0 0-.1-3.2s-1.1-.4-3.6 1.3a12.5 12.5 0 0 0-6.4 0C6.1 2 5 2.4 5 2.4a4.4 4.4 0 0 0-.1 3.2 4.8 4.8 0 0 0-1.3 3.3c0 4.7 3 5.8 5.8 6.1-.5.5-.8 1.2-.8 2.2"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6v15M3 4c4-1 7 0 9 2 2-2 5-3 9-2v15c-4-1-7 0-9 2-2-2-5-3-9-2Z"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 8V5a1 1 0 0 1 1-1h5l2 3h9a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8h18"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 5"/></symbol>
+    <symbol id="i-api" viewBox="0 0 24 24"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-14-2 16"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="m6 9 3 3-3 3m7 0h5"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3c1.5 5 3.5 7 9 9-5.5 1.5-7.5 3.5-9 9-1.5-5.5-3.5-7.5-9-9 5.5-2 7.5-4 9-9Z"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1-3.7 1.4 1.4 0 0 1 .7-2.6H17a4 4 0 0 0 4-4A9 9 0 0 0 12 3Z"/><circle cx="7" cy="10" r=".7"/><circle cx="10" cy="7" r=".7"/><circle cx="15" cy="7" r=".7"/><circle cx="6.5" cy="14" r=".7"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 10-12h-7Z"/></symbol>
+    <symbol id="i-orbit" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-40 12 12)"/><circle cx="12" cy="12" r="5"/><path d="m18 3 3 3"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M5 3v10m0 4v4m7-18v4m0 4v10m7-18v10m0 4v4"/><circle cx="5" cy="15" r="2"/><circle cx="12" cy="9" r="2"/><circle cx="19" cy="15" r="2"/></symbol>
+    <symbol id="i-load" viewBox="0 0 24 24"><path d="M4 7h15m-3-3 3 3-3 3M20 17H5m3-3-3 3 3 3"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M4 19c-3-9 2-14 16-15 0 13-6 18-14 14m-2 3L15 10"/></symbol>
+  </svg>
 
-<div class="layout">
-    <main class="main">
-        <header class="header">
-            <h1 class="title" data-text="Hi, PW">Hi, PW <span class="wave-emoji">👋</span></h1>
-            <p class="subtitle"><span id="typewriter"></span><span class="typing-cursor"></span></p>
-            <div class="visitor-counter">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <span>Visitors: <span id="visitorCount">---</span></span>
+  <div class="site-shell" id="top">
+    <header class="site-header">
+      <a class="wordmark" href="#top" aria-label="PW 的主页">pw<span>.</span></a>
+      <nav class="header-nav" aria-label="主导航"><a class="nav-home" href="#top" aria-current="page">我的主页</a><a href="#services">服务导航</a><a href="#about">关于这里</a></nav>
+      <div class="header-actions">
+        <a class="github-link" href="https://github.com/asts-top" target="_blank" rel="noopener noreferrer" aria-label="在新标签页查看 PW 的 GitHub"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg><span>GitHub</span><svg class="icon small" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <span class="header-separator" aria-hidden="true"></span>
+        <button class="theme-toggle icon-button" id="theme-toggle" type="button" aria-label="切换深浅主题" title="切换深浅主题" hidden><svg class="icon theme-moon" aria-hidden="true"><use href="#i-moon"/></svg><svg class="icon theme-sun" aria-hidden="true"><use href="#i-sun"/></svg></button>
+      </div>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="little-star" aria-hidden="true">✳</span> A SMALL CORNER OF THE INTERNET</p>
+          <h1 id="hero-title">嗨，我是 <span class="name">PW<span class="name-dot">.</span></span></h1>
+          <p class="hero-tagline">欢迎来到我的数字小院。</p>
+          <p class="hero-description">一些文字，一点灵感，还有那些好用的工具。<br>把喜欢的事物收在这里，让每一次探索都有个起点。</p>
+          <div class="hero-actions"><a class="button button-primary" href="https://blog.hipw.cc" data-visit="blog" target="_blank" rel="noopener noreferrer">去博客坐坐<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a><a class="text-link" href="#services">发现我的工具箱<svg class="icon" aria-hidden="true"><use href="#i-right"/></svg></a></div>
+          <div class="hero-footnote"><span class="short-line" aria-hidden="true"></span> KEEP CURIOUS. KEEP CREATING.</div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <svg class="garden-art" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 360" fill="none">
+            <defs>
+              <linearGradient id="arch-gradient" x1="197" y1="71" x2="307" y2="255" gradientUnits="userSpaceOnUse"><stop stop-color="#a9baa4"/><stop offset="1" stop-color="#6e8c71"/></linearGradient>
+              <linearGradient id="book-cover" x1="126" y1="213" x2="319" y2="283" gradientUnits="userSpaceOnUse"><stop stop-color="#dd987d"/><stop offset="1" stop-color="#b8664e"/></linearGradient>
+              <linearGradient id="sphere-gradient" x1="350" y1="80" x2="403" y2="140" gradientUnits="userSpaceOnUse"><stop stop-color="#f0dba6"/><stop offset="1" stop-color="#d3ac62"/></linearGradient>
+              <linearGradient id="paper-gradient" x1="174" y1="214" x2="268" y2="266" gradientUnits="userSpaceOnUse"><stop stop-color="#fffdf1"/><stop offset="1" stop-color="#e8ddc1"/></linearGradient>
+            </defs>
+            <ellipse class="art-halo" cx="253" cy="185" rx="168" ry="147"/>
+            <ellipse class="art-orbit" cx="257" cy="215" rx="204" ry="72" transform="rotate(-16 257 215)" stroke-dasharray="3 7"/>
+            <path class="art-line" d="M93 77h24m-12-12v24m289 182h16m-8-8v16" stroke-width="1.5"/>
+            <circle cx="92" cy="275" r="4" fill="#c28b70"/><circle cx="405" cy="186" r="3" fill="#8b9f82"/>
+            <ellipse cx="257" cy="299" rx="147" ry="14" class="art-ground"/>
+            <path d="M194 257V124a72 72 0 0 1 144 0v133l-72 32Z" fill="#587b62"/>
+            <path d="M178 249V116a72 72 0 0 1 144 0v133l-72 32Z" fill="url(#arch-gradient)"/>
+            <path d="M204 238V120a46 46 0 0 1 92 0v137l-46 16Z" class="arch-inside"/>
+            <path d="M205 178h90m-45-103v197" stroke="#8ba38a" stroke-width="1" opacity=".5"/>
+            <g class="art-floating art-float-one"><ellipse cx="377" cy="133" rx="34" ry="8" fill="#8d9474" opacity=".09"/><circle cx="372" cy="105" r="35" fill="url(#sphere-gradient)"/><ellipse cx="372" cy="105" rx="15" ry="35" stroke="#f8e6bc" stroke-width="1.2" transform="rotate(-24 372 105)"/><ellipse cx="372" cy="105" rx="35" ry="13" stroke="#f8e6bc" stroke-width="1.2" transform="rotate(-24 372 105)"/><path d="m356 74 29 62" stroke="#f8e6bc" stroke-width="1.2"/><circle cx="400" cy="78" r="6" fill="#b87459"/></g>
+            <g transform="translate(307 185)"><path d="M0 46 48 29 92 46 44 66Z" fill="#d5c6a7"/><path d="M0 46v42l44 19V66Z" fill="#e1d6bb"/><path d="M44 66v41l48-19V46Z" fill="#c6b795"/><ellipse cx="43" cy="33" rx="24" ry="8" fill="#71907a"/><path d="M19 32 23 61q20 17 41-1l3-28" fill="#839c80"/><ellipse cx="43" cy="32" rx="24" ry="8" fill="#5b745a"/><path d="M43 33V-23m0 44L29 3m14 9L59-9m-16 7L35-28" stroke="#547459" stroke-width="2.5" stroke-linecap="round"/><path d="M42-8C18-6 14-23 19-31 34-29 43-23 42-8" fill="#859e7a"/><path d="M44 6c-1-27 14-40 25-35C74-13 63 1 44 6" fill="#6b8e69"/><path d="M43 24C17 24 15 8 20 0 34 1 40 10 43 24" fill="#74936c"/><path d="M44 26c2-20 16-27 27-24 0 17-12 25-27 24" fill="#93a67b"/></g>
+            <path d="m108 250 98-48 132 55-94 48Z" fill="#a96850"/>
+            <path d="m108 241 98-48 132 55v10l-94 46-136-54Z" fill="url(#book-cover)"/>
+            <path d="m119 237 87-43 117 49-80 43Z" fill="#f2e8d1"/><path d="m120 241 123 49 80-42m-203-3 123 49 80-42" stroke="#d4c4a6" stroke-width="1.3"/>
+            <path d="m118 225 87-43 7 69-69 34Z" fill="url(#paper-gradient)"/><path d="m205 182 119 48-81 44-31-23Z" fill="#fff9e8"/><path d="m118 225 125 49 81-44v9l-81 45-125-49Z" fill="#eee2c5"/><path d="m205 182 7 69 31 23" stroke="#cbb996" stroke-width="1.2"/>
+            <path d="m136 225 46-23m-32 29 39-19m-24 25 27-13m40-10 47 19m-55-10 41 17m-47-9 28 11" stroke="#c3ba9f" stroke-width="2" stroke-linecap="round"/>
+            <path d="m245 250 15 6-9 19-4-6-8 1Z" fill="#809b79"/>
+            <g class="art-floating art-float-two"><g transform="rotate(-9 132 127)"><rect x="73" y="84" width="112" height="82" rx="9" fill="#d2d5c1"/><rect x="69" y="80" width="112" height="82" rx="9" fill="#344d40"/><path d="M70 103h110" stroke="#657967"/><circle cx="82" cy="92" r="2.5" fill="#d9997d"/><circle cx="91" cy="92" r="2.5" fill="#dac68b"/><circle cx="100" cy="92" r="2.5" fill="#98af8f"/><path d="m86 118 8 6-8 6m17 0h15" stroke="#e4e9d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M131 118h32m-32 9h23m-51 16h47" stroke="#79957d" stroke-width="2" stroke-linecap="round"/></g></g>
+            <g transform="rotate(8 345 275)"><rect x="305" y="252" width="104" height="43" rx="8" fill="#bcbda8" opacity=".3"/><rect x="303" y="248" width="104" height="43" rx="8" class="art-label"/><text x="316" y="274" fill="#4f6c54" font-family="Georgia,serif" font-size="17" font-style="italic">stay curious.</text></g>
+            <text x="244" y="337" text-anchor="middle" class="art-caption" font-family="Arial,sans-serif" font-size="8" letter-spacing="3">A LITTLE SPACE. ENDLESS POSSIBILITIES.</text>
+          </svg>
+        </div>
+      </section>
+      <section id="services" class="services-section" aria-labelledby="services-title" tabindex="-1">
+        <div class="section-heading"><div><p class="eyebrow">THE COLLECTION</p><h2 id="services-title">我的工具箱<span class="heading-dot">.</span></h2></div><p class="section-note">好用的，都在这里。<span>12 个精选入口</span></p></div>
+        <div class="workspace">
+          <div class="library">
+            <div class="search-field" id="search-field" hidden><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><label class="sr-only" for="service-search">搜索服务名称、描述或域名</label><input id="service-search" type="search" placeholder="找一个工具，或一点灵感…" autocomplete="off" spellcheck="false"><button id="clear-search" class="icon-button clear-search" type="button" aria-label="清空搜索" hidden><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button><kbd id="search-shortcut" title="按 / 搜索">/</kbd></div>
+            <div class="filter-row" id="filter-row" hidden><div class="filters" role="group" aria-label="筛选服务分类"><button class="filter" type="button" data-filter="all" aria-pressed="true">全部<span data-count="all">12</span></button><button class="filter" type="button" data-filter="daily" aria-pressed="false">日常<span data-count="daily">3</span></button><button class="filter" type="button" data-filter="ai" aria-pressed="false">AI 工具<span data-count="ai">6</span></button><button class="filter" type="button" data-filter="manage" aria-pressed="false">服务管理<span data-count="manage">3</span></button><button class="filter favorites-filter" type="button" data-filter="favorites" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg>收藏<span data-count="favorites">0</span></button></div></div>
+            <p class="sr-only" id="search-status" role="status" aria-live="polite" aria-atomic="true"></p>
+            <div class="service-grid" id="service-grid">
+              <article class="service-card" data-id="blog" data-category="daily" data-keywords="写作 文章 文字 笔记 articles writing">
+                <a class="service-link" href="https://blog.hipw.cc" target="_blank" rel="noopener noreferrer"><span class="service-icon terracotta"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg></span><span class="service-name">Blog <span class="service-alias">博客</span></span><p class="service-description">文字、想法与日常记录</p><span class="service-domain">blog.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 Blog" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="pan" data-category="daily" data-keywords="网盘 文件 资源 OpenList files storage">
+                <a class="service-link" href="https://pan.hipw.cc" target="_blank" rel="noopener noreferrer"><span class="service-icon ochre"><svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg></span><span class="service-name">Pan <span class="service-alias">云盘</span></span><p class="service-description">收好文件，让资源井井有条</p><span class="service-domain">pan.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 Pan" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="image" data-category="daily" data-keywords="图片 上传 托管 hosting photo">
+                <a class="service-link" href="https://image.hipw.cc" target="_blank" rel="noopener noreferrer"><span class="service-icon sage"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg></span><span class="service-name">Image <span class="service-alias">图床</span></span><p class="service-description">给每张图片一个安放之处</p><span class="service-domain">image.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 Image" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="api" data-category="ai" data-keywords="模型 接口 New API gateway">
+                <a class="service-link" href="https://api.hipw.cc" target="_blank" rel="noopener noreferrer"><span class="service-icon slate"><svg class="icon" aria-hidden="true"><use href="#i-api"/></svg></span><span class="service-name">API <span class="service-alias">模型网关</span></span><p class="service-description">连接模型与灵感的统一入口</p><span class="service-domain">api.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 API" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="gcli" data-category="ai" data-keywords="Gemini CLI 接口 终端 GCLI2API">
+                <a class="service-link" href="https://gcli.hipw.cc" target="_blank" rel="noopener noreferrer"><span class="service-icon sage"><svg class="icon" aria-hidden="true"><use href="#i-terminal"/></svg></span><span class="service-name">GCLI <span class="service-alias">终端服务</span></span><p class="service-description">Gemini CLI 的 API 服务</p><span class="service-domain">gcli.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 GCLI" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="grok" data-category="ai" data-keywords="Grok2API 模型 对话 聊天 chat xai">
+                <a class="service-link" href="https://grok.hipw.cc" target="_blank" rel="noopener noreferrer"><span class="service-icon charcoal"><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg></span><span class="service-name">Grok <span class="service-alias">模型服务</span></span><p class="service-description">探索 Grok 模型与 API</p><span class="service-domain">grok.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 Grok" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="zimage" data-category="ai" data-keywords="生图 绘画 图片 生成 创作 creative studio">
+                <a class="service-link" href="https://z.hipw.cc" target="_blank" rel="noopener noreferrer"><span class="service-icon terracotta"><svg class="icon" aria-hidden="true"><use href="#i-palette"/></svg></span><span class="service-name">ZImage <span class="service-alias">创意画室</span></span><p class="service-description">把脑海里的灵感变成图像</p><span class="service-domain">z.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 ZImage" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="kiro" data-category="ai" data-keywords="Kiro-Go 管理 配置 admin 编程 coding">
+                <a class="service-link" href="https://kiro.hipw.cc/admin" target="_blank" rel="noopener noreferrer"><span class="service-icon lavender"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg></span><span class="service-name">Kiro <span class="service-alias">开发助手</span></span><p class="service-description">Kiro 服务管理与配置</p><span class="service-domain">kiro.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 Kiro" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="gus" data-category="ai" data-keywords="Gemini Business2API 接口 企业">
+                <a class="service-link" href="https://gus.hipw.cc" target="_blank" rel="noopener noreferrer"><span class="service-icon slate"><svg class="icon" aria-hidden="true"><use href="#i-orbit"/></svg></span><span class="service-name">Gus <span class="service-alias">Gemini 服务</span></span><p class="service-description">Gemini Business API 入口</p><span class="service-domain">gus.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 Gus" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="panel" data-category="manage" data-keywords="控制 控制台 管理 面板 control">
+                <a class="service-link" href="https://panel.hipw.cc" target="_blank" rel="noopener noreferrer"><span class="service-icon sage"><svg class="icon" aria-hidden="true"><use href="#i-panel"/></svg></span><span class="service-name">Panel <span class="service-alias">控制面板</span></span><p class="service-description">个人服务的管理入口</p><span class="service-domain">panel.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 Panel" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="cpa" data-category="manage" data-keywords="CLI Proxy API 代理 管理 management login">
+                <a class="service-link" href="https://cpa.hipw.cc/management.html#/login" target="_blank" rel="noopener noreferrer"><span class="service-icon ochre"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg></span><span class="service-name">CPA <span class="service-alias">代理管理</span></span><p class="service-description">CLI Proxy API 管理中心</p><span class="service-domain">cpa.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 CPA" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
+              <article class="service-card" data-id="load" data-category="manage" data-keywords="GPT Load 负载 均衡 渠道 分发 balance">
+                <a class="service-link" href="https://load.hipw.cc" target="_blank" rel="noopener noreferrer"><span class="service-icon charcoal"><svg class="icon" aria-hidden="true"><use href="#i-load"/></svg></span><span class="service-name">Load <span class="service-alias">负载分发</span></span><p class="service-description">管理 API 渠道与请求分发</p><span class="service-domain">load.hipw.cc<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+                <button class="favorite-button" type="button" aria-label="收藏 Load" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+              </article>
             </div>
-        </header>
-
-        <div class="search-box">
-            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search services...">
-            <span class="search-hint">/</span>
+            <div class="empty-results" id="empty-results" hidden><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><h3 id="empty-title">还没找到这个工具</h3><p id="empty-description">试试名称、用途，或换一个分类。</p><button class="button button-secondary" id="reset-filters" type="button">查看全部工具</button></div>
+            <p class="library-note"><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg>服务在新标签页打开<span class="favorite-note" hidden> · 点亮星标，收好常用工具</span></p>
+          </div>
+          <aside class="sidebar" aria-label="此刻与最近访问">
+            <section class="moment-card" id="moment-card" aria-labelledby="moment-title" hidden><div class="sidebar-title"><h3 id="moment-title">此时此刻</h3><svg class="icon moment-sun" aria-hidden="true"><use href="#i-sun"/></svg></div><p class="local-time"><time id="local-time">--:--</time><span class="time-period" id="time-period"></span></p><p class="local-date" id="local-date"></p><div class="moment-bottom"><span class="status-dot" aria-hidden="true"></span><span id="time-greeting">给自己一点探索的时间。</span><span class="timezone-label">本地时间</span></div></section>
+            <section class="recent-section" id="recent-section" aria-labelledby="recent-title" hidden><div class="sidebar-title"><h3 id="recent-title"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>最近打开</h3><button id="clear-recent" class="quiet-button" type="button" aria-label="清空最近访问" hidden>清空</button></div><div id="recent-list" class="recent-list"></div><div class="recent-empty" id="recent-empty"><div class="empty-orbits" aria-hidden="true"><span></span><svg class="icon"><use href="#i-clock"/></svg></div><p>下一站，从这里开始。</p><span>打开过的工具，会在这里等你。</span></div><p class="storage-note" id="storage-note">记录只保存在当前浏览器</p></section>
+            <section class="about-card" id="about" aria-labelledby="about-title" tabindex="-1"><div class="about-icon" aria-hidden="true"><svg class="icon"><use href="#i-leaf"/></svg></div><p class="eyebrow">A NOTE FROM PW</p><h3 id="about-title">小小的主页，<br>装得下很多好奇。</h3><p>这里收纳了我的博客、文件和日常折腾的工具。随意逛逛，希望你也能发现一点有趣的东西。</p><a href="https://github.com/asts-top" target="_blank" rel="noopener noreferrer">在 GitHub 遇见我<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a><span class="about-flower" aria-hidden="true">✳</span></section>
+          </aside>
         </div>
-
-        <!-- 服务卡片 - 赛博朋克纯文字风格 -->
-        <div id="navGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-            
-            <a href="http://blog.hipw.cc" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ BLOG ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="http://pan.hipw.cc" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ PAN ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="http://api.hipw.cc" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ API ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="http://panel.hipw.cc" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ PANEL ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="http://gcli.hipw.cc" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ GCLI ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="http://image.hipw.cc" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ IMAGE ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="http://grok.hipw.cc" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ GROK ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="https://cpa.hipw.cc/management.html#/login" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ CPA ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="http://z.hipw.cc" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ ZIMAGE ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="http://kiro.hipw.cc/admin" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ KIRO ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="http://gus.hipw.cc" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ GUS ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-
-            <a href="http://load.hipw.cc" class="card cyber-card">
-                <div class="cyber-btn">
-                    <span class="label">[ LOAD ]</span>
-                    <span class="arrow">&gt;&gt;&gt;</span>
-                </div>
-            </a>
-        </div>
+      </section>
     </main>
-
-    <!-- 右侧面板 -->
-    <aside style="width: var(--panel-width); background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); padding: 24px 16px; position: fixed; right: 0; top: 0; bottom: 0; border-left: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column;">
-        
-        <!-- 最近访问容器 -->
-        <div style="background: rgba(255,255,255,0.03); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.08); flex: 1;">
-            <div style="font-size: 10px; font-weight: 600; color: var(--lime); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px; display: flex; align-items: center; gap: 6px;">
-                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Recent Visits
-            </div>
-            <div id="recentList" style="display: flex; flex-direction: column; gap: 10px;"></div>
-        </div>
-
-        <!-- 底部固定区域 -->
-        <div style="margin-top: 16px;">
-            <!-- 时钟 -->
-            <div style="background: var(--card); border-radius: 12px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.05);">
-                <div id="clockTime" style="font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 700; color: var(--lime);">00:00:00</div>
-                <div id="clockDate" style="font-size: 11px; color: var(--text2); margin-top: 4px;">Loading...</div>
-            </div>
-
-            <!-- 状态 -->
-            <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--card); border-radius: 10px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                <div style="width: 6px; height: 6px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 8px #22C55E;"></div>
-                <span style="font-size: 10px; color: var(--text2);">ONLINE • v2.0</span>
-            </div>
-        </div>
-    </aside>
-</div>
-
-
-<script>
-// 矩阵代码雨
-const canvas = document.getElementById('matrix-bg');
-const ctx = canvas.getContext('2d');
-let w = canvas.width = window.innerWidth;
-let h = canvas.height = window.innerHeight;
-
-const chars = '01アイウエオカキクケコサシスセソ';
-const arr = chars.split('');
-const fontSize = 14;
-const cols = w / fontSize;
-const drops = Array(Math.floor(cols)).fill(1);
-
-function drawMatrix() {
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#D4E157';
-    ctx.font = fontSize + 'px monospace';
-    
-    for (let i = 0; i < drops.length; i++) {
-        const text = arr[Math.floor(Math.random() * arr.length)];
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-        if (drops[i] * fontSize > h && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
-    }
-}
-setInterval(drawMatrix, 33);
-
-window.addEventListener('resize', () => {
-    w = canvas.width = window.innerWidth;
-    h = canvas.height = window.innerHeight;
-});
-
-// 时钟
-function updateClock() {
-    const now = new Date();
-    document.getElementById('clockTime').textContent = now.toLocaleTimeString('en-US', { hour12: false });
-    document.getElementById('clockDate').textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-}
-updateClock();
-setInterval(updateClock, 1000);
-
-// 搜索
-document.getElementById('searchInput').addEventListener('input', e => {
-    const q = e.target.value.toLowerCase();
-    document.querySelectorAll('.card').forEach(c => {
-        c.style.display = c.textContent.toLowerCase().includes(q) ? '' : 'none';
-    });
-});
-
-// 键盘快捷键
-document.addEventListener('keydown', e => {
-    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
-        e.preventDefault();
-        document.getElementById('searchInput').focus();
-    }
-    if (e.key === 'Escape') {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('searchInput').blur();
-        document.querySelectorAll('.card').forEach(c => c.style.display = '');
-    }
-});
-
-// 卡片悬停音效（可选）
-document.querySelectorAll('.cyber-card').forEach(c => {
-    c.addEventListener('mouseenter', () => {
-        // 可以添加音效
-    });
-});
-
-// 右侧面板链接悬停
-document.querySelectorAll('aside a').forEach(a => {
-    a.addEventListener('mouseenter', () => {
-        a.style.background = 'var(--card-hover)';
-        a.style.borderColor = 'rgba(212, 225, 87, 0.3)';
-    });
-    a.addEventListener('mouseleave', () => {
-        a.style.background = 'var(--card)';
-        a.style.borderColor = 'rgba(255,255,255,0.05)';
-    });
-});
-
-// 打字机效果
-const phrases = [
-    "Welcome to the Command Center",
-    "All systems operational",
-    "Ready to explore?",
-    "The Gateway Awaits",
-    "Let's Explore"
-];
-let phraseIndex = 0;
-let charIndex = 0;
-let isDeleting = false;
-const typewriter = document.getElementById('typewriter');
-
-function type() {
-    const currentPhrase = phrases[phraseIndex];
-    
-    if (isDeleting) {
-        typewriter.textContent = currentPhrase.substring(0, charIndex - 1);
-        charIndex--;
-    } else {
-        typewriter.textContent = currentPhrase.substring(0, charIndex + 1);
-        charIndex++;
-    }
-    
-    let delay = isDeleting ? 30 : 80;
-    
-    if (!isDeleting && charIndex === currentPhrase.length) {
-        delay = 2000;
-        isDeleting = true;
-    } else if (isDeleting && charIndex === 0) {
-        isDeleting = false;
-        phraseIndex = (phraseIndex + 1) % phrases.length;
-        delay = 500;
-    }
-    
-    setTimeout(type, delay);
-}
-type();
-
-// 访客计数器
-let visits = localStorage.getItem('visitCount') || 0;
-visits = parseInt(visits) + 1;
-localStorage.setItem('visitCount', visits);
-document.getElementById('visitorCount').textContent = visits.toLocaleString();
-
-// 服务数据
-const services = {
-    'blog.hipw.cc': { name: 'Blog', desc: 'Articles', color: 'linear-gradient(135deg, #1a1a1a, #333)', icon: '<svg width="18" height="18" fill="none" stroke="var(--lime)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>' },
-    'pan.hipw.cc': { name: 'Pan', desc: 'Files', color: 'linear-gradient(135deg, #4338ca, #6366f1)', icon: '<svg width="18" height="18" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>' },
-    'api.hipw.cc': { name: 'API', desc: 'Services', color: 'linear-gradient(135deg, #d97706, #f59e0b)', icon: '<svg width="18" height="18" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>' },
-    'panel.hipw.cc': { name: 'Panel', desc: 'Control', color: 'linear-gradient(135deg, #7c3aed, #8b5cf6)', icon: '<svg width="18" height="18" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z"/></svg>' },
-    'gcli.hipw.cc': { name: 'GCLI', desc: 'Terminal', color: '#000', icon: '<svg width="18" height="18" fill="none" stroke="#22c55e" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>' },
-    'image.hipw.cc': { name: 'Image', desc: 'Hosting', color: 'linear-gradient(135deg, #db2777, #ec4899)', icon: '<svg width="18" height="18" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>' },
-    'grok.hipw.cc': { name: 'Grok', desc: 'AI Chat', color: 'linear-gradient(135deg, #0f172a, #1e3a5f)', icon: '<svg width="18" height="18" fill="none" stroke="#60a5fa" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>' },
-    'cpa.hipw.cc': { name: 'CPA', desc: 'Accounting', color: 'linear-gradient(135deg, #14532d, #16a34a)', icon: '<svg width="18" height="18" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>' },
-    'z.hipw.cc': { name: 'ZImage', desc: 'Images', color: 'linear-gradient(135deg, #7c2d12, #ea580c)', icon: '<svg width="18" height="18" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>' },
-    'kiro.hipw.cc': { name: 'Kiro', desc: 'Service', color: 'linear-gradient(135deg, #312e81, #6d28d9)', icon: '<svg width="18" height="18" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' },
-    'gus.hipw.cc': { name: 'Gus', desc: 'Service', color: 'linear-gradient(135deg, #164e63, #0891b2)', icon: '<svg width="18" height="18" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>' },
-    'load.hipw.cc': { name: 'Load', desc: 'Transfer', color: 'linear-gradient(135deg, #1c1917, #57534e)', icon: '<svg width="18" height="18" fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>' }
-};
-
-// 最近访问功能
-function getRecentVisits() {
-    return JSON.parse(localStorage.getItem('recentVisits') || '[]');
-}
-
-function addRecentVisit(url) {
-    const host = new URL(url).host;
-    let recent = getRecentVisits().filter(h => h !== host);
-    recent.unshift(host);
-    recent = recent.slice(0, 3);
-    localStorage.setItem('recentVisits', JSON.stringify(recent));
-}
-
-function renderRecentVisits() {
-    const recent = getRecentVisits();
-    const container = document.getElementById('recentList');
-    
-    // 始终显示 3 个格子
-    let html = '';
-    for (let i = 0; i < 3; i++) {
-        const host = recent[i];
-        const s = host ? services[host] : null;
-        
-        if (s) {
-            html += `<a href="http://${host}" class="recent-link" style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; text-decoration: none; color: var(--text); transition: all 0.2s; border: 1px solid rgba(255,255,255,0.05);">
-                <div style="width: 36px; height: 36px; background: ${s.color}; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${s.icon}</div>
-                <div style="flex: 1; min-width: 0;">
-                    <div style="font-weight: 500; font-size: 13px;">${s.name}</div>
-                    <div style="font-size: 10px; color: var(--text2);">${s.desc}</div>
-                </div>
-                <svg width="14" height="14" fill="none" stroke="var(--text2)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>`;
-        } else {
-            html += `<div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.1);">
-                <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.03); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <span style="color: var(--text2); font-size: 16px;">?</span>
-                </div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 500; font-size: 13px; color: var(--text2);">Empty Slot</div>
-                    <div style="font-size: 10px; color: rgba(255,255,255,0.3);">Click a service</div>
-                </div>
-            </div>`;
-        }
-    }
-    container.innerHTML = html;
-}
-
-// 记录点击
-document.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('click', () => {
-        addRecentVisit(card.href);
-    });
-});
-
-renderRecentVisits();
-</script>
-
-<style>
-/* 响应式 - 平板和手机 */
-@media (max-width: 900px) {
-    aside { 
-        display: none !important; 
-    }
-    .main { 
-        margin-right: 0 !important; 
-    }
-}
-
-/* 响应式 - 手机 */
-@media (max-width: 600px) {
-    .main { 
-        padding: 20px !important; 
-        padding-top: 5vh !important;
-        margin-right: 0 !important;
-    }
-    
-    .title { 
-        font-size: 48px !important;
-        letter-spacing: 2px !important;
-    }
-    
-    .title::before,
-    .title::after {
-        display: none !important;
-    }
-    
-    .header {
-        margin-bottom: 30px;
-    }
-    
-    .subtitle {
-        font-size: 14px;
-    }
-    
-    .search-box {
-        max-width: 100%;
-    }
-    
-    #navGrid { 
-        grid-template-columns: 1fr !important; 
-        gap: 12px;
-    }
-    
-    .cyber-btn {
-        padding: 16px 18px;
-        font-size: 1rem;
-    }
-    
-    .visitor-counter {
-        font-size: 11px;
-    }
-}
-
-/* 响应式 - 小手机 */
-@media (max-width: 400px) {
-    .title { 
-        font-size: 40px !important;
-    }
-    
-    .cyber-btn {
-        padding: 14px 16px;
-        font-size: 0.95rem;
-        letter-spacing: 1px;
-    }
-}
-</style>
+    <footer class="site-footer"><div><span class="footer-mark">pw.</span><span>© <span id="year">2026</span> PW · 保持好奇，随时出发。</span></div><a href="#top">回到顶部<svg class="icon" aria-hidden="true"><use href="#i-right"/></svg></a></footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 </body>
 </html>
